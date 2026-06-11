@@ -3,14 +3,12 @@ Write-Host "  Brevet 2026 - Dashboard Controle Continu" -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check Python
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) {
     Write-Host "Python introuvable. Installe Python 3.10+." -ForegroundColor Red
     exit 1
 }
 
-# Check dependencies
 Write-Host "Verification des dependances..." -ForegroundColor Yellow
 $missing = @()
 $deps = @("fastapi", "uvicorn", "pronotepy")
@@ -21,7 +19,6 @@ foreach ($dep in $deps) {
         $missing += $dep
     }
 }
-
 if ($missing.Count -gt 0) {
     Write-Host "   Installation de : $($missing -join ', ')" -ForegroundColor Yellow
     python -m pip install $missing
@@ -30,7 +27,6 @@ if ($missing.Count -gt 0) {
         exit 1
     }
 }
-
 Write-Host "Dependances OK" -ForegroundColor Green
 Write-Host ""
 

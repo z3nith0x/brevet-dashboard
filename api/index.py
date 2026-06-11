@@ -10,7 +10,7 @@ from .brevet import fetch_and_calculate
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
-app = FastAPI(title="Brevet 2026 - Contrôle Continu", version="1.0.0")
+app = FastAPI(title="Brevet 2026 - Controle Continu", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,25 +35,24 @@ def health():
 
 @app.post("/api/calculate")
 def calculate(req: LoginRequest):
-    result = fetch_and_calculate(
+    return fetch_and_calculate(
         url=req.url,
         login=req.username,
         password=req.password,
         ent=req.ent,
     )
-    return result
 
 
-# Serve static files for local development
-HERE = Path(__file__).resolve().parent
-PUBLIC = HERE.parent / "public"
+# Local dev only — Vercel serves static files from public/ natively
+if not os.environ.get("VERCEL"):
+    HERE = Path(__file__).resolve().parent
+    PUBLIC = HERE.parent / "public"
+    if PUBLIC.is_dir():
+        from fastapi.staticfiles import StaticFiles
+        from fastapi.responses import FileResponse
 
-if PUBLIC.is_dir():
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import FileResponse
+        app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
 
-    app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
-
-    @app.get("/")
-    def index():
-        return FileResponse(str(PUBLIC / "index.html"))
+        @app.get("/")
+        def index():
+            return FileResponse(str(PUBLIC / "index.html"))
