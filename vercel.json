@@ -1,13 +1,6 @@
 {
   "version": 2,
   "buildCommand": null,
-  "outputDirectory": "public",
-  "functions": {
-    "api/**/*.py": {
-      "memory": 300,
-      "maxDuration": 30
-    }
-  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.py" },
     { "src": "/(.*)", "dest": "/public/$1" }
