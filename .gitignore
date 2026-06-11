@@ -27,3 +27,6 @@ Thumbs.db
 # Project specific
 *.db
 pronote_fichiers/
+
+# Vercel
+.vercel/
