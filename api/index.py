@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
 from pydantic import BaseModel
 
 from .brevet import fetch_and_calculate
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+HERE = Path(__file__).resolve().parent
+PUBLIC = HERE.parent / "public"
 
 
 class LoginRequest(BaseModel):
@@ -43,16 +47,15 @@ def calculate(req: LoginRequest):
     )
 
 
-# Local dev only — Vercel serves static files from public/ natively
-if not os.environ.get("VERCEL"):
-    HERE = Path(__file__).resolve().parent
-    PUBLIC = HERE.parent / "public"
-    if PUBLIC.is_dir():
-        from fastapi.staticfiles import StaticFiles
-        from fastapi.responses import FileResponse
-
-        app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
-
-        @app.get("/")
-        def index():
-            return FileResponse(str(PUBLIC / "index.html"))
+# Catch-all: serve frontend files (works on Vercel AND locally)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    if not PUBLIC.is_dir():
+        return {"error": "public directory not found"}
+    file = PUBLIC / full_path
+    if file.is_file():
+        return FileResponse(str(file))
+    index = PUBLIC / "index.html"
+    if index.is_file():
+        return FileResponse(str(index))
+    return {"error": "not found"}
