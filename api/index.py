@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 
 from .brevet import fetch_and_calculate
@@ -34,7 +34,18 @@ class LoginRequest(BaseModel):
 
 @app.get("/", include_in_schema=False)
 def home():
-    return FileResponse(PUBLIC / "index.html")
+    candidates = [
+        PUBLIC / "index.html",
+        Path("public/index.html").resolve(),
+        Path("/var/task/public/index.html"),
+    ]
+    for p in candidates:
+        try:
+            if p.is_file():
+                return FileResponse(p)
+        except OSError:
+            pass
+    return RedirectResponse("/index.html", status_code=307)
 
 
 @app.get("/api/health")
