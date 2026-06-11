@@ -1,0 +1,59 @@
+import os
+import logging
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from .brevet import fetch_and_calculate
+
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+
+app = FastAPI(title="Brevet 2026 - Contrôle Continu", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class LoginRequest(BaseModel):
+    url: str
+    username: str
+    password: str
+    ent: str = ""
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/api/calculate")
+def calculate(req: LoginRequest):
+    result = fetch_and_calculate(
+        url=req.url,
+        login=req.username,
+        password=req.password,
+        ent=req.ent,
+    )
+    return result
+
+
+# Serve static files for local development
+HERE = Path(__file__).resolve().parent
+PUBLIC = HERE.parent / "public"
+
+if PUBLIC.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
+
+    @app.get("/")
+    def index():
+        return FileResponse(str(PUBLIC / "index.html"))
