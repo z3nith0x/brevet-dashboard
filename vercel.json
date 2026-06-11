@@ -4,7 +4,6 @@
   "outputDirectory": "public",
   "functions": {
     "api/**/*.py": {
-      "runtime": "vercel-python@3.12",
       "memory": 300,
       "maxDuration": 30
     }
