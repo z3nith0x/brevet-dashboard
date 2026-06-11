@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from .brevet import fetch_and_calculate
@@ -20,12 +21,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+HERE = Path(__file__).resolve().parent
+PUBLIC = HERE.parent / "public"
+
 
 class LoginRequest(BaseModel):
     url: str
     username: str
     password: str
     ent: str = ""
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(PUBLIC / "index.html")
 
 
 @app.get("/api/health")
@@ -43,10 +52,7 @@ def calculate(req: LoginRequest):
     )
 
 
-# Local dev only — Vercel serves public/ from CDN via rewrites
-if not os.environ.get("VERCEL"):
-    HERE = Path(__file__).resolve().parent
-    PUBLIC = HERE.parent / "public"
-    if PUBLIC.is_dir():
-        from fastapi.staticfiles import StaticFiles
-        app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
+# Local dev: serve css/js/etc from public/ (on Vercel the CDN does this)
+if not os.environ.get("VERCEL") and PUBLIC.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(PUBLIC), html=True), name="public")
